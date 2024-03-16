@@ -1,0 +1,34 @@
+origin = "bruh"
+#엄청나게 빠른루프!
+def changed1(s,d,c):
+    while True:
+        global origin
+        d = int(d)
+        c = int(c)
+        origin="bruh"
+        changed(s,d,c)
+        return s,d,c
+
+def changed(s,d,c):
+    while True:
+        d = int(d)
+        c = int(c)
+        result = changed1(s,d,c)
+
+        if result == False :
+            result = changed1(s,d,c)
+        if result == True :
+            result = changed1(s,d,c)
+        return s,d,c
+for i in range(999) :
+    changed("bruh",0,0)
+
+for i in range(10):  # range 함수에 인자를 추가
+    origin = "11"
+
+count = 0
+while True:
+    print(origin)
+    count += 1
+    if count > 10:  # 종료 조건 추가
+        break
