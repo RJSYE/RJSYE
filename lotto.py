@@ -1,54 +1,49 @@
 import random
 
-money = 500000000000
-first = 0
-def lotto(amount):
-    global money, first
-    lottery = random.sample(range(1,46),6)
-    bonus = random.sample(range(1,46),1)[0]
-    count = 0
-    loop = 0
-    bonus1 = 0
+money = 5000000000000
+
+def buy(n, money2):
+    global money
+    money1 = money2
+    already = [[]]
+    lottery = random.sample(range(1, 46), 6)
+    bonus = random.choice(range(1, 46))  # 보너스 번호는 하나만 필요하므로 random.choice를 사용합니다.
+    n = int(n)
     five = 0
-    if amount > 1000:
-        lottery = random.sample(range(1,46),5)
+    four = 0
+    for _ in range(n):
+
+        num = random.sample(range(1, 46), 6)
+        if num in already[0] :
+            while num in already[0] :
+                num = random.sampe(range(1,46),6)
+                break
         
-        count = count + 1
-    for _ in range(amount):
-        sam = random.sample(range(1,46),6)
-        loop += 1
+        count = len(set(num) & set(lottery))
+        bonus_count = 1 if bonus in num else 0
 
-        for num in sam:
-            if num in lottery:
-                count += 1
-            if num == bonus:
-                bonus1 += 1
-
-        if count == 6:
-            money += 2000000000
-            print("당첨을 축하합니다! 1등입니다!")
-            first = first + 1
-        elif count == 5 and bonus1 == 1:
-            money += 30000000
-            print("당첨을 축하합니다! 2등입니다!")
-        elif count == 5:
-            money += 1000000
-            print("당첨을 축하합니다! 3등입니다!")
-        elif count == 4:
-            money += 50000
-            print("당첨을 축하합니다! 4등입니다!")
-        elif count == 3:
-            money += 5000
+        if count == 3:
             five += 1
-            if loop == amount:
-                print("당첨을 축하합니다! %s 번이 5등입니다!"%five)
-    return count
+        if count == 4:
+            four += 1
+        if count == 5:
+            print("축하합니다 3등입니다!")
+            money += 5000000
+        if count == 5 and bonus_count == 1:
+            print("축하합니다! 2등입니다!")
+            money += 20000000
+        if count == 6:
+            print("[[[ 축하합니다 1등입니다! ]]] \n\n\n")
+            money += 2000000000
+        already.append(num)
+        
+    print("축하합니다! %s개의 5등이있어요." %five)
+    print("축하합니다! %s개의 4등이있어요." %four)
+    money += (five * 5000 + four * 50000)
+    earn = money - money1
+    print("총 당첨금 : %s" % earn)
 
-buy = int(input("안녕하세요 호구님 로또복권 몇개를 구입하시겠습니까?"))
-price = buy*5000
-if money >= price :
-    money -= price
-    lotto(buy)
-    print("%d개의 로또를 구입하셨습니다! 파산하기전에 당첨되길 빌어!" % buy)
-    if first > 0:
-        print("당첨을 축하합니다! 1등입니다!")
+a = int(input("복권 구매수량입력"))
+money = money - a*1000
+if money >= a*1000 :
+    buy(a, money)
