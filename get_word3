@@ -1,0 +1,145 @@
+# import requests
+# import sqlite3
+# from googleapiclient.discovery import build
+# import os
+
+# # SQLite 데이터베이스 연결 (또는 다른 DB로 교체 가능)
+# conn = sqlite3.connect('filter_words.db')
+# cursor = conn.cursor()
+# cursor.execute('''CREATE TABLE IF NOT EXISTS bad_words (word TEXT UNIQUE)''')
+# conn.commit()
+# # API 키 설정 (API 키를 환경 변수로 설정하거나 직접 입력)
+# api_key = 'AIzaSyAVnteL9JlOKZwa0cUk52PgpuqVYi7rZZQ'  # 또는 'YOUR_API_KEY'
+
+# # YouTube API 클라이언트 빌드
+# youtube = build('youtube', 'v3', developerKey=api_key)
+
+# def search_youtube_videos(search_query, max_results=10):
+#     # 유튜브 검색어로 비디오 ID를 검색
+#     request = youtube.search().list(
+#         q=search_query,
+#         part='id',
+#         type='video',
+#         maxResults=max_results
+#     )
+#     response = request.execute()
+
+#     # 비디오 ID 리스트 반환
+#     video_ids = [item['id']['videoId'] for item in response['items']]
+#     return video_ids
+
+# def get_video_comments(video_id, max_comments=10):
+#     # 주어진 비디오 ID에 대해 댓글 가져오기
+#     request = youtube.commentThreads().list(
+#         part='snippet',
+#         videoId=video_id,
+#         maxResults=max_comments
+#     )
+#     response = request.execute()
+
+#     # 댓글 내용 가져오기
+#     comments = []
+#     for item in response['items']:
+#         comment = item['snippet']['topLevelComment']['snippet']['textDisplay']
+#         # 공백으로 분할하여 리스트에 추가
+#         comments.extend(comment.split())
+#     return comments
+
+# # 함수 사용 예시
+# search_query = ''  # 검색어 입력
+# video_ids = search_youtube_videos(search_query)
+
+# for video_id in video_ids:
+#     comments = get_video_comments(video_id)
+#     print(f"비디오 id: {video_id}")
+#     print("댓글에 포함된 단어:", comments)
+#     for part in comments:
+#         res = requests.post("http://127.0.0.1:5000/chk", json={"text": part})
+#         if res.text == '욕':
+#             # DB에 part 저장
+#             cursor.execute('INSERT OR IGNORE INTO bad_words (word) VALUES (?)', (part.lower(),))
+#             conn.commit()
+#         print(res.text)
+        
+# # 샘플 텍스트 분할
+
+# # sample = 'ㅅㅂ'
+# # parts = sample.split()
+
+# # # API 요청 및 응답 처리
+# # for part in parts:
+# #     res = requests.post("http://127.0.0.1:5000/chk", json={"text": part})
+# #     if res.text == '욕':
+# #         # DB에 part 저장
+# #         cursor.execute('INSERT OR IGNORE INTO bad_words (word) VALUES (?)', (part.lower(),))
+# #         conn.commit()
+# #     print(res.text)
+
+# # # 데이터베이스 연결 종료
+# conn.close()
+import requests
+from bs4 import BeautifulSoup
+import sqlite3
+
+# SQLite 데이터베이스 연결 (또는 다른 DB로 교체 가능)
+conn = sqlite3.connect('filter_words.db')
+cursor = conn.cursor()
+cursor.execute('''CREATE TABLE IF NOT EXISTS bad_words (word TEXT UNIQUE)''')
+conn.commit()
+
+def search_youtube_videos(search_query, max_results=10):
+    # 유튜브 검색어로 비디오 ID를 검색 (크롤링 방식)
+    search_url = f"https://www.youtube.com/results?search_query={search_query}"
+    response = requests.get(search_url)
+    soup = BeautifulSoup(response.text, 'html.parser')
+    print(soup)
+    video_elements = soup.find_all(id="video-title")
+    print(video_elements)
+
+    # video_ids = []
+    # for video in soup.find_all('a', href=True):
+    #     href = video['href']
+        
+    #     if '/watch?v=' in href:
+    #         video_id = href.split('/watch?v=')[1]
+    #         video_ids.append(video_id)
+    #         if len(video_ids) >= max_results:
+    #             break
+    # return video_ids
+
+def get_video_comments(video_url, max_comments=10):
+    # 주어진 비디오 URL에 대해 댓글 가져오기
+    response = requests.get(video_url)
+    soup = BeautifulSoup(response.text, 'html.parser')
+
+    # 댓글 가져오기 (이 부분은 동적으로 로드되는 데이터를 처리하지 않음)
+    comments_divs = soup.find_all('yt-formatted-string', {'id': 'content-text'}, limit=max_comments)
+    comments = [comment.text for comment in comments_divs]
+    
+    # 공백으로 분할하여 리스트에 추가
+    words = []
+    for comment in comments:
+        words.extend(comment.split())
+    return words
+
+# 함수 사용 예시
+search_query = '파이썬 튜토리얼'  # 검색어 입력
+video_ids = search_youtube_videos(search_query)
+print(video_ids)
+for video_id in video_ids:
+    video_url = f'https://www.youtube.com/watch?v={video_id}'
+    print(video_url)
+    
+    # comments = get_video_comments(video_url)
+    # # print(f"비디오 URL: {video_url}")
+    # # print("댓글에 포함된 단어:", comments)
+    # for part in comments:
+    #     res = requests.post("http://127.0.0.1:5000/chk", json={"text": part})
+    #     if res.text == '욕':
+    #         # DB에 part 저장
+    #         cursor.execute('INSERT OR IGNORE INTO bad_words (word) VALUES (?)', (part.lower(),))
+    #         conn.commit()
+    #     print(res.text)
+
+# 데이터베이스 연결 종료
+conn.close()
